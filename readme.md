@@ -1,25 +1,27 @@
 
-# condor hooks
+# git batch
 
 ## abstract
 
-This collection of script will create reproducable results for SDIL while simplifiying the handling for the user.
+This will create a git remote, that takes care of running batch jobs.
 
-
+The user pushes into the batch-remote to run the batch job and fetches the results by pulling from the batch-remote. The batch job is configurated by the users by supplying a snake file.
 
 
 ## getting started
 
 ```bash
-# setup scripts
-cd <this dir>
-pip3 install -r condor/requirements.txt  --user
-./condor/init_condor_repo.sh ../condor_work
+cd <project>
+git submodule add git@github.com:SmartDataInnovationLab/git_batch.git .batch
+pip3 install -r .batch/requirements.txt  --user
+./.batch/init_condor_repo.sh <batch-base folder>
+cp .batch/examples/dummy.rules snake.rules
 
 # do a test-run
-echo "a" >> a.txt ; git commit -am "." ; git push batch master
+echo "a" >> a.txt ; git commit -am "." ; git push batch
 
 # when condor finishes, get results with
+git pull batch
 ```
 
 ## toc
@@ -43,29 +45,6 @@ echo "a" >> a.txt ; git commit -am "." ; git push batch master
 		* [how to](#how-to)
 
 <!-- /code_chunk_output -->
-
-
-### relevant links
-
-* https://github.com/andypohl/htcondor-docker
-* https://research.cs.wisc.edu/htcondor/manual/quickstart.html
-* http://www.sdil.de/system/assets/100/original/sdil-platform-documentation.pdf
-* http://www.sdil.de/system/assets/99/original/sdil-platform-tutorials.pdf
-* https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks
-* http://wiki.scc.kit.edu/lsdf/index.php/Developing_a_HTCondor_Plugin_for_Jupyter_Notebook
-
-submodules & production
-
-* https://stackoverflow.com/a/32170260/5132456
-
-Leseliste:
-
-* longs demo-notebook
-* daniels masterthesis
-
-offene Recherche:
-
-* Wie werden in CI/CD die git modules behandelt?  
 
 ## general idea
 
@@ -167,57 +146,52 @@ How?
 
 user must take care themselves. all input must be readonly. all links outside the repo must be readonly
 
-# dev note
+# dev notes
+
+this section is only relevant, if you want to edit this project
+
+### relevant links
+
+condor:
+
+* https://github.com/andypohl/htcondor-docker
+* https://research.cs.wisc.edu/htcondor/manual/quickstart.html
+* http://wiki.scc.kit.edu/lsdf/index.php/Developing_a_HTCondor_Plugin_for_Jupyter_Notebook
+
+sdil:
+
+* http://www.sdil.de/system/assets/100/original/sdil-platform-documentation.pdf
+* http://www.sdil.de/system/assets/99/original/sdil-platform-tutorials.pdf
+
+
+git:
+
+* https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks
+* https://stackoverflow.com/a/32170260/5132456
+
+Leseliste:
+
+* longs demo-notebook
+* daniels masterthesis
+
+offene Recherche:
+
+* Wie werden in CI/CD die git modules behandelt?  
+
 
 ## setting up debugging
 
 * (ggf. remote undso einrichten)
 * shell1: `tail -f /tmp/mycondor_simulator.log`
 * shell2: `tail -f /tmp/mycondor_simulator.log.err`
-* shell3: `echo "a" >> a.txt ; git commit -am "." ; git push condor master`
+* shell3: `echo "a" >> a.txt ; git commit -am "." ; git push batch master`
 
-## implementation
 
-### todo
-
-* [x] start  htcondor in docker
-* [x] send jobs to htcondor
-* [x] exec dummy.py
-	* [x] on condor
-	* [x] via githook
-	* [x] on condor via githook
-* [ ] exec notebook
-	* [x] as py
-	* [ ] on condor
-	* [x] via githook
-	* [ ] on condor via githook
-	* [ ] on `at` via githook
-* [ ] post/pre run script
-	- [x] check symlinks existance
-	- [x] check symlinks RO
-	- [x] git commit
-	- [ ] mail to user when done with fetch-instruction
-	- [ ] check hash before run
-	- [ ] udpate hash after run and update symlinks
-- [ ] refactor
-   - [ ] move .batch to it's own repo
-   - [ ] include .batch as git submodule in example project
-
-### git hooks
-
-### how to
-
-#### githook test
-
-     echo "a" >> a.txt ; git commit -am "." ; git push condor master
-
-#### htcondor inside docker
-
+### htcondor inside docker
 
 host starten:
 
     docker run -it --rm -h htcondor --name htcondor andypohl/htcondor
-
 
 job starten:
 
@@ -228,13 +202,11 @@ job starten:
     docker exec -ti htcondor chmod +x dummy.py
     docker exec -ti -u 1000:1000 htcondor condor_submit run.sub
 
-
 job anschauen:
 
     docker exec -ti -u 1000:1000 htcondor condor_status
     docker exec -ti -u 1000:1000 htcondor cat dummy.log
     docker exec -ti -u 1000:1000 htcondor cat outfile.txt
-
 
 debugging:
 

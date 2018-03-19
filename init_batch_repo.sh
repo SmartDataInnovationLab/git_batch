@@ -2,7 +2,7 @@
 
 batch_base=$(realpath $1)
 batch_repo="$batch_base/repo"
-receive_hook=$(realpath .batch/post-receive)
+receive_hook=$(realpath .batch/src/post-receive)
 
 ########################################################################
 ############################# checks ###################################

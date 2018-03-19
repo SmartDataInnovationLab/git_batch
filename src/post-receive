@@ -1,21 +1,14 @@
-
 #! /bin/sh
-
-echo "DEBUG: post-receive invoked"
 set -e
+echo "DEBUG: post-receive invoked"
+echo "ref $ref received.  Starting batch-job..."
+worktree_base=$(realpath ..)
+branch=$(date +%FT%H%M%S)
+worktree=$worktree_base/$branch
+git worktree add $worktree
+cd $worktree
 
-while read oldrev newrev ref
-do
-    # if echo $ref | grep "/master\$";
-    echo "ref $ref received.  Starting batch-job on SDIL..."
+echo "todo... run snakemake"
 
-    worktree_base=$(realpath ..)
-    branch=$(date +%FT%H%M%S)
-    worktree=$worktree_base/$branch
-    git worktree add $worktree
-    cd $worktree
-
-    ./.batch/schedule.sh
-    echo "fetch results with: git pull batch" $branch
-    cd -
-done
+echo "when the job is done, fetch results with: git pull batch" $branch
+cd -
