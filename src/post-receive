@@ -1,0 +1,21 @@
+
+#! /bin/sh
+
+echo "DEBUG: post-receive invoked"
+set -e
+
+while read oldrev newrev ref
+do
+    # if echo $ref | grep "/master\$";
+    echo "ref $ref received.  Starting batch-job on SDIL..."
+
+    worktree_base=$(realpath ..)
+    branch=$(date +%FT%H%M%S)
+    worktree=$worktree_base/$branch
+    git worktree add $worktree
+    cd $worktree
+
+    ./.batch/schedule.sh
+    echo "fetch results with: git pull batch" $branch
+    cd -
+done
