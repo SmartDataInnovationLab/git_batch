@@ -64,17 +64,17 @@ all subfolders of the `examples` folder contain a `schedule.sh` file and  suppor
 
 This example project will schedule a job via [at](https://en.wikipedia.org/wiki/At_(Unix)).
 
-To run this example:
+To run this example from scratch:
 
 ```bash
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
-cd git_batch
 
 # init a bash remote
-./init_batch_repo.sh $HOME/.batch
+./git_batch/init_batch_repo.sh $HOME/.batch
 
 # copy the example project into a empty directory
-cp -r examples/at_notebook/ /tmp/at_notebook
+cp -r git_batch/examples/at_notebook/ /tmp/at_notebook
+cd /tmp/at_notebook
 
 # prepare the git repository
 git init; git add .; git commit -m "."
@@ -87,7 +87,7 @@ git push batch master
 cat /tmp/at.log
 
 # pull the results (the output from "git push" will tell you the exact command)
-git pull batch 2018-03-21T143210
+git pull batch master
 ```
 
 to actually run the notebook, you might install the python requirements
