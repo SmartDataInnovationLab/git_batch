@@ -89,7 +89,7 @@ sleep 5
 # look at the log (defined in schedule.sh)
 cat /tmp/at.log
 
-# pull the results (the output from "git push" will tell you the exact command)
+# pull the results
 git pull batch master
 ```
 
