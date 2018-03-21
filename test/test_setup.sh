@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
+set -e
+batch_base=$(mktemp -d)
+./init_batch_repo.sh $batch_base
 
-base=$(realpath $1)
+cd $(mktemp -d)
+git init
+git remote add batch $batch_base/repo.git
 
-echo "todo: create project repo at base/repo"
-echo "todo: init batch remote at base/work"
-echo "todo: create snake.rules"
+
+echo "-------------------"
+echo "run tests with"
+echo "./test/test.sh" $(realpath .) 
+echo "-------------------"
