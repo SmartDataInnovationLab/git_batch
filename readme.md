@@ -69,7 +69,7 @@ To run this example from scratch:
 ```bash
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
 
-# init a bash remote
+# init a batch remote
 ./git_batch/init_batch_repo.sh $HOME/.batch
 
 # copy the example project into an empty directory
