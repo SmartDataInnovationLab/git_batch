@@ -25,21 +25,22 @@ echo "initializing batch repo at: $batch_repo"
 
 mkdir -p $batch_repo; cd $batch_repo
 git init --bare
-cat > $batch_repo/hooks/post-receive <<-EOM
+cat > hooks/post-receive <<-EOM
 #! /bin/sh
 set -e
 echo "DEBUG: post-receive invoked"
 echo "ref $ref received.  Starting batch-job..."
-worktree_base=$(realpath ..)
-branch=$(date +%FT%H%M%S)
-worktree=$worktree_base/$branch
-git worktree add $worktree
+worktree_base=\$(realpath ..)
+branch=\$(date +%FT%H%M%S)
+worktree=\$worktree_base/\$branch
+git worktree add \$worktree
 
-cd $worktree
+cd \$worktree
 ./schedule.sh
 
-echo "when the job is done, fetch results with: git pull batch" $branch
+echo "when the job is done, fetch results with: git pull batch" \$branch
 EOM
+chmod  +x hooks/post-receive
 
 echo "repo successfully created. Now you can set it as remote by executing: "
 echo "git remote add batch $batch_repo"
