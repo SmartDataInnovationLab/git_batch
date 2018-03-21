@@ -1,156 +1,105 @@
-
 # git batch
-
-## abstract
 
 This will create a git remote, that takes care of running batch jobs.
 
-The user pushes into the batch-remote to run the batch job and fetches the results by pulling from the batch-remote. The batch job is configurated by the users by supplying a snake file.
+The user pushes into the batch-remote to run the batch job and fetches the results by pulling from the batch-remote. The batch job is configurated by the users.
 
 
-## getting started
+## quickstart
+
+Here is a small example for how to setup up a  remote repository for batch work
 
 ```bash
-cd <project>
-git submodule add git@github.com:SmartDataInnovationLab/git_batch.git .batch
-pip3 install -r .batch/requirements.txt  --user
-./.batch/init_condor_repo.sh <batch-base folder>
-cp .batch/examples/dummy.rules snake.rules
+cd $(mktemp -d)
+wget https://raw.githubusercontent.com/SmartDataInnovationLab/git_batch/master/init_batch_repo.sh
+chmod +x init_batch_repo.sh
+./init_batch_repo.sh $HOME/.batch
+
+cd /path/to/my_project
+git remote add batch $HOME/.batch/repo.git
+
+#set up your scheduler for this project
+nano schedule.sh
+git add schedule.sh
 
 # do a test-run
-echo "a" >> a.txt ; git commit -am "." ; git push batch
+git commit -m "added scheduling for batch processing"
+git push batch master
 
-# when condor finishes, get results with
-git pull batch
+# when batch finishes, get results with
+git pull batch master
 ```
 
-## toc
+Note: `schedule.sh` must make sure the project is run, and the results are committed.
+
+To undo those changes:
+
+```bash
+rm -rf $HOME/.batch
+git remote remove batch
+```
+
+## table of content
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=3 orderedList=false} -->
 <!-- code_chunk_output -->
 
-* [condor hooks](#condor-hooks)
-	* [abstract](#abstract)
-	* [getting started](#getting-started)
-	* [toc](#toc)
-		* [relevant links](#relevant-links)
-	* [general idea](#general-idea)
-		* [use-case](#use-case)
-		* [directory-structur](#directory-structur)
-* [dev note](#dev-note)
+* [git batch](#git-batch)
+	* [quickstart](#quickstart)
+	* [table of content](#table-of-content)
+	* [examples](#examples)
+		* [at_notebook](#at_notebook)
+* [dev notes](#dev-notes)
+	* [relevant links](#relevant-links)
 	* [setting up debugging](#setting-up-debugging)
-	* [implementation](#implementation)
-		* [todo](#todo)
-		* [git hooks](#git-hooks)
-		* [how to](#how-to)
+		* [htcondor inside docker](#htcondor-inside-docker)
 
 <!-- /code_chunk_output -->
 
-## general idea
+## examples
 
-### use-case
+all subfolders of the `examples` folder contain a `schedule.sh` file and  supporting files to set up a runnable project.
 
-  * easy to invoke execution of ipyn on htcondor
-  * perfect reproduction
+### at_notebook
 
-**what user needs to know**
+This example project will schedule a job via [at](https://en.wikipedia.org/wiki/At_(Unix)).
 
-  * invokation: user makes `git push condor master` and hooks and scripts take care of the rest
-  * reproduction:
-    * data is tagged (dirname = hash of content)
-    * data-tag is used in softlink in code-dir
-    * code is tagged (git tag or commit hash)
-    * --> checking out the `git tag` will give you everything you need to reproduce
+To run this example:
 
-**limitations**
+```bash
+git clone git@github.com:SmartDataInnovationLab/git_batch.git
+cd git_batch
 
-Only needs to work inside the user-repo. Especially the big data-files are located in the userrepo.
+# init a bash remote
+./init_batch_repo.sh $HOME/.batch
 
-But it must be considered, that multiple condor-jobs might access the data, while the user is working on it herself.
-So there must be some kind of seperation of the files happen.
+# copy the example project into a empty directory
+cp -r examples/at_notebook/ /tmp/at_notebook
 
+# prepare the git repository
+git init; git add .; git commit -m "."
+git remote add batch $HOME/.batch/repo.git
 
-### directory-structur
+# do a test run
+git push batch master
 
-  * `~/<projectname>/data`: links (softlinks or hardlink) to outside of repo
-    * lots of data
-    * some of it readonly and immutable
-    * some of it outputdata (needs to be writable)  
-  * `~/<projectname>/condor`: submodule
-    * `init_repo.sh`: create repo to push into
-    * `post-receive`: git-hook, creates worktree, invokes condor_submit for `condor.run`
-    * `condor.run`: job file for htcondor. invokes `condor.sh`
-    * `condor.sh`: invokes `pre_run`, `run` and `post_run`
-    * `pre_run.sh`: setting up data before running the main script
-    * `run.sh`: runs the actual program/notebook/script
-    * `post_run.sh`: tagging data and commiting results
+# look at the log (defined in schedule.sh)
+cat /tmp/at.log
 
-#### `~/<projectname>/data`
+# pull the results (the output from "git push" will tell you the exact command)
+git pull batch 2018-03-21T143210
+```
 
-**Problem:**
+to actually run the notebook, you might install the python requirements
 
-* Many runs will produced many duplicate files
-* files, that are only read, shall not be copied
+    pip3 install -r requirements.txt
 
-**Solution 1**
-
-* git-like hashing of data
-
-(problem: how to handle changes of files?)
-
-**Solution 2**
-
-* using hardlinks to files:
-  * New files are created somewhere, filename contains hash of content
-  * Old files are never modified
-  * when copying into a new dir, only hardlinks are created
-
-**Solution 3**
-
-* Copy on write
-
-How?
-
-* filesystem-level?
-* access/write files only via magic?
-* replace write-calls in python before executing it?
-
-
-**Solution 4:**
-
-* everything is read-only
-* User must define exception explicitly
-* the exceptions will be copied instead of linked
-
-**solution 5:**
-
-* copy everything
-* only check in, what was actually changed
-
-
-**implementation 1**
-
-`%smartcopy`: magic in ipyn, that sets up data
-
-**implementation 2**
-
-`pre_run.sh`: copies files, that are soft-linked and writeable
-`post_run.sh`: tags modified files and creates softlinks in worktree
-
-**implementation 2a**
-
-`pre_run.sh`: all links are read-only
-`post_run.sh`: tags new files and creates softlinks in worktree
-
-**implementation 3**
-
-user must take care themselves. all input must be readonly. all links outside the repo must be readonly
 
 # dev notes
 
 this section is only relevant, if you want to edit this project
 
-### relevant links
+## relevant links
 
 condor:
 
@@ -182,8 +131,7 @@ offene Recherche:
 ## setting up debugging
 
 * (ggf. remote undso einrichten)
-* shell1: `tail -f /tmp/mycondor_simulator.log`
-* shell2: `tail -f /tmp/mycondor_simulator.log.err`
+* shell1: `tail -f /tmp/at.log`
 * shell3: `echo "a" >> a.txt ; git commit -am "." ; git push batch master`
 
 

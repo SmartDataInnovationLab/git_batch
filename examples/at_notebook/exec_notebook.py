@@ -7,7 +7,7 @@ from nbconvert.preprocessors import CellExecutionError
 import os
 import shutil
 
-notebook_path = "notebook/dummy.ipynb"
+notebook_path = "dummy.ipynb"
 notebook_abspath = os.path.realpath(notebook_path)
 notebook_filename = os.path.basename(notebook_abspath)
 notebook_folder = os.path.dirname(notebook_abspath)
