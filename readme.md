@@ -49,6 +49,7 @@ git remote remove batch
 	* [table of content](#table-of-content)
 	* [examples](#examples)
 		* [at_notebook](#at_notebook)
+		* [htcondor notebook](#htcondor-notebook)
 * [dev notes](#dev-notes)
 	* [relevant links](#relevant-links)
 	* [setting up debugging](#setting-up-debugging)
@@ -96,6 +97,46 @@ git pull batch master
 to actually run the notebook, you might install the python requirements
 
     pip3 install -r requirements.txt
+
+### htcondor notebook
+
+This example shows how to setup and run notebooks remotely on sdil via condor.
+
+first setup a remote repository on sdil:
+
+```bash
+ssh <your_username>@login-l.sdil.kit.edu
+cd $(mktemp -d)
+wget https://raw.githubusercontent.com/SmartDataInnovationLab/git_batch/master/init_batch_repo.sh
+chmod +x init_batch_repo.sh
+./init_batch_repo.sh $HOME/.batch
+```
+
+then copy the example onto your local machine and try it out
+
+```bash
+git clone git@github.com:SmartDataInnovationLab/git_batch.git
+
+# copy the example project into an empty directory
+cp -r git_batch/examples/condor_notebook/ /tmp/condor_notebook
+cd /tmp/condor_notebook
+
+# prepare the git repository
+git init; git add .; git commit -m "."
+git remote add batch ssh://<your_username>@login-l.sdil.kit.edu/gpfs/smartdata/ugfam/.batch/repo.git
+
+# do a test run
+git push batch master
+
+# wait until the job is done
+sleep 10
+
+# pull the results
+git pull batch master
+
+# look at the log
+cat condor_log.txt
+```
 
 
 # dev notes
