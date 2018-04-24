@@ -50,6 +50,7 @@ git remote remove batch
 	* [examples](#examples)
 		* [at_notebook](#at_notebook)
 		* [htcondor notebook](#htcondor-notebook)
+	* [how does it work?](#how-does-it-work)
 * [dev notes](#dev-notes)
 	* [relevant links](#relevant-links)
 	* [setting up debugging](#setting-up-debugging)
@@ -142,6 +143,15 @@ git pull batch master
 cat condor_log.txt
 ```
 
+## how does it work?
+
+The heart of the project is the receive-hook in the remote repository. Whenever the remote repository receives a pull, it will create a new work tree for the received branch, and then it will call `schedule.sh` from the branch inside the worktree's folder.
+
+The `schedule.sh` is the entry-point for the user-customization. Here the actual scheduling has to initiated (e.g. with a simple "condor_submit").
+
+For the best experience the results should be commited after the job is run (this must be done by a user-supplied script, because the receive-hook can not know when the job is finished). This way the user can access the results with a simple `git pull`
+
+Note: the schedule script runs inside the hook, which means that it will be run as the user doing the push; Its output will be part of the output of `git push`, and it has to finish before `git push` can finish.
 
 # dev notes
 
