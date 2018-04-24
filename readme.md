@@ -121,6 +121,9 @@ git clone git@github.com:SmartDataInnovationLab/git_batch.git
 cp -r git_batch/examples/condor_notebook/ /tmp/condor_notebook
 cd /tmp/condor_notebook
 
+# optional: update path to git in run.sh, because htcondor runs as a different user and may not know the correct version of git
+nano run.sh
+
 # prepare the git repository
 chmod +x schedule.sh
 git init; git add .; git commit -m "."
