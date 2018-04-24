@@ -122,6 +122,7 @@ cp -r git_batch/examples/condor_notebook/ /tmp/condor_notebook
 cd /tmp/condor_notebook
 
 # prepare the git repository
+chmod +x schedule.sh
 git init; git add .; git commit -m "."
 git remote add batch ssh://<your_username>@login-l.sdil.kit.edu/smartdata/<your_username>/.batch/repo.git
 
