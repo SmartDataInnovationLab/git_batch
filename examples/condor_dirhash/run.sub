@@ -1,0 +1,21 @@
+
+executable              = run.sh
+log                     = condor_log.txt
+output                  = condor_outfile.txt
+error                   = condor_errors.txt
+should_transfer_files   = Yes
+when_to_transfer_output = on_exit_or_evict
+
+request_memory = 1 GB
+request_cpus = 1
++REQUESTED_WALLTIME = 60
+
+# notify_user = ugfam@student.kit.edu
+# notification = Always
+
+# for some reason initial doesn't seem to work
+# initialdir = $ENV(PWD)
+
+environment = "workdir=$ENV(PWD)"
+
+queue 1
