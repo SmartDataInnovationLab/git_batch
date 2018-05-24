@@ -143,6 +143,57 @@ git pull batch master
 cat condor_log.txt
 ```
 
+### condor and dirhash
+
+this example is the same as above, except the data will be frozen in a hashed archive 
+
+Setup your remote like you did above, except this time do it on the bi-cluster (because we need pyspark): 
+
+```bash
+ssh <your_username>@bi-01-login.sdil.kit.edu
+cd $(mktemp -d)
+wget https://raw.githubusercontent.com/SmartDataInnovationLab/git_batch/master/init_batch_repo.sh
+chmod +x init_batch_repo.sh
+./init_batch_repo.sh $HOME/.batch
+```
+
+now check out the example-project and 
+
+```bash
+git clone git@github.com:SmartDataInnovationLab/git_batch.git
+
+# copy the example project into an empty directory
+cp -r git_batch/examples/condor_dirhash/ $HOME/temp/condor_dirhash
+cd $HOME/temp/condor_dirhash
+
+# freeze the data in your archive 
+pyspark --jars $HOME/dev/dirhash/target/sparkhacks-0.0.1-SNAPSHOT.jar $HOME/dev/dirhash/dirhash.py $HOME/temp/condor_dirhash/data/ --move-to-archive $HOME/temp/archive/ --softlink $HOME/temp/condor_dirhash/data/ 2>/dev/null
+
+# optional: update path to git in run.sh, because htcondor runs as a different user and may not know the correct version of git
+nano run.sh
+
+# prepare the git repository
+chmod +x schedule.sh
+git init; git add .; git commit -m "."
+git remote add batch $HOME/.batch/repo.git
+
+# do a test run (we need condor for this, so connect to the correct machine)
+ssh <your_username>@login-l.sdil.kit.edu
+cd $HOME/temp/condor_dirhash
+git push batch master
+
+# wait until the job is done
+sleep 10
+
+# pull the results
+git pull batch master
+
+# look at the log
+cat condor_log.txt
+```
+
+
+
 ## how does it work?
 
 The heart of the project is the receive-hook in the remote repository. Whenever the remote repository receives a pull, it will create a new work tree for the received branch, and then it will call `schedule.sh` from the branch inside the worktree's folder.
