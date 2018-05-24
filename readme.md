@@ -169,6 +169,9 @@ cd $HOME/temp/condor_dirhash
 # freeze the data in your archive 
 pyspark --jars $HOME/dev/dirhash/target/sparkhacks-0.0.1-SNAPSHOT.jar $HOME/dev/dirhash/dirhash.py $HOME/temp/condor_dirhash/data/ --move-to-archive $HOME/temp/archive/ --softlink $HOME/temp/condor_dirhash/data/ 2>/dev/null
 
+# as you can see the data-dir is now softlinked to the archive, and also all the files are readonly
+ls -la
+
 # optional: update path to git in run.sh, because htcondor runs as a different user and may not know the correct version of git
 nano run.sh
 
