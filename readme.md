@@ -175,6 +175,9 @@ ls -la
 # optional: update path to git in run.sh, because htcondor runs as a different user and may not know the correct version of git
 nano run.sh
 
+# tell condor your email adress, so it can notify you when the job is done
+nano run.sub
+
 # prepare the git repository
 chmod +x schedule.sh
 git init; git add .; git commit -m "."
