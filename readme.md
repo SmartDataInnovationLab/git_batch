@@ -39,6 +39,14 @@ rm -rf $HOME/.batch
 git remote remove batch
 ```
 
+## why git?
+
+We use git to make experiments reproducible. When we check in the code, the conda-environment and softlinks to the data, the experiment becomes reproducible.
+
+After this we "only" need to make sure the data won't get changed, which we do via file-system permissions; And we need to make sure, there are no outside-influences, which is why only run binaries from conda.
+
+As long as you follow the instructions, your computations will be reproducible by others.
+
 ## table of content
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=3 orderedList=false} -->
