@@ -145,9 +145,9 @@ cat condor_log.txt
 
 ### condor and dirhash
 
-this example is the same as above, except the data will be frozen in a hashed archive 
+this example is the same as above, except the data will be frozen in a hashed archive
 
-Setup your remote like you did above, except this time do it on the bi-cluster (because we need pyspark): 
+Setup your remote like you did above, except this time do it on the bi-cluster (because we need pyspark):
 
 ```bash
 ssh <your_username>@bi-01-login.sdil.kit.edu
@@ -157,7 +157,7 @@ chmod +x init_batch_repo.sh
 ./init_batch_repo.sh $HOME/.batch
 ```
 
-now check out the example-project and 
+now check out the example-project and
 
 ```bash
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
@@ -166,16 +166,23 @@ git clone git@github.com:SmartDataInnovationLab/git_batch.git
 cp -r git_batch/examples/condor_dirhash/ $HOME/temp/condor_dirhash
 cd $HOME/temp/condor_dirhash
 
-# freeze the data in your archive 
+# freeze the data in your archive
 pyspark --jars $HOME/dev/dirhash/target/sparkhacks-0.0.1-SNAPSHOT.jar $HOME/dev/dirhash/dirhash.py $HOME/temp/condor_dirhash/data/ --move-to-archive $HOME/temp/archive/ --softlink $HOME/temp/condor_dirhash/data/ 2>/dev/null
 
 # as you can see the data-dir is now softlinked to the archive, and also all the files are readonly
 ls -la
 
-# optional: update path to git in run.sh, because htcondor runs as a different user and may not know the correct version of git
-nano run.sh
+# prepate a conda environment for your project (now is a good time to grab a coffee. This will take a while)
+conda create --name=my_env --clone=anaconda510-py35-with-jupyter_cms --copy
 
-# tell condor your email adress, so it can notify you when the job is done
+# tell your run-script to use this environment, so it will be used when executed in htcondor
+sed -i -e 's/anaconda510-py35-with-jupyter_cms/my_env/' run.sh
+
+# we need a newer version of git, since git_batch uses git-branches, which are not available in sdil's pre-installed version. So let's just add it to our cnoda env
+conda install --name myenv git
+
+# tell condor your email adress, so it can notify you when the job is done.
+# remove the comment in the line with 'notify_user' and fill in your own email address
 nano run.sub
 
 # prepare the git repository
@@ -184,8 +191,6 @@ git init; git add .; git commit -m "."
 git remote add batch $HOME/.batch/repo.git
 
 # do a test run (we need condor for this, so connect to the correct machine)
-ssh <your_username>@login-l.sdil.kit.edu
-cd $HOME/temp/condor_dirhash
 git push batch master
 
 # wait until the job is done
