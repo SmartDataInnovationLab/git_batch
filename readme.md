@@ -193,6 +193,9 @@ conda install --name myenv git
 # remove the comment in the line with 'notify_user' and fill in your own email address
 nano run.sub
 
+# tell condor your email adress, so it can notify you when the job is done
+nano run.sub
+
 # prepare the git repository
 chmod +x schedule.sh
 git init; git add .; git commit -m "."
