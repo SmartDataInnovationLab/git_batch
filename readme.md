@@ -111,6 +111,8 @@ to actually run the notebook, you might install the python requirements
 
 This example shows how to setup and run notebooks remotely on sdil via condor.
 
+Note: As of june 2018, git and condor don't seem to work on the same machine at the same time. So this section currently doesn't work on SDIL.
+
 first setup a remote repository on sdil:
 
 ```bash
@@ -155,19 +157,10 @@ cat condor_log.txt
 
 this example is the same as above, except the data will be frozen in a hashed archive
 
-Setup your remote like you did above, except this time do it on the bi-cluster (because we need pyspark):
-
 ```bash
 ssh <your_username>@bi-01-login.sdil.kit.edu
-cd $(mktemp -d)
-wget https://raw.githubusercontent.com/SmartDataInnovationLab/git_batch/master/init_batch_repo.sh
-chmod +x init_batch_repo.sh
-./init_batch_repo.sh $HOME/.batch
-```
 
-now check out the example-project and
-
-```bash
+# check out the example-project and
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
 
 # copy the example project into an empty directory
@@ -176,42 +169,43 @@ cd $HOME/temp/condor_dirhash
 
 # freeze the data in your archive
 pyspark --jars $HOME/dev/dirhash/target/sparkhacks-0.0.1-SNAPSHOT.jar $HOME/dev/dirhash/dirhash.py $HOME/temp/condor_dirhash/data/ --move-to-archive $HOME/temp/archive/ --softlink $HOME/temp/condor_dirhash/data/ 2>/dev/null
+# (Note: this command will be simplified once we have decided on a workflow)
 
-# as you can see the data-dir is now softlinked to the archive, and also all the files are readonly
-ls -la
+# as you can see the data-dir is now softlinked to the archive, and inside all the files are readonly
+ls -la data data/
+
+# the rest will be done on the login-machine, since the BI machines don't have access to conda
+ssh <your_username>@login-l.sdil.kit.edu
 
 # prepate a conda environment for your project (now is a good time to grab a coffee. This will take a while)
-conda create --name=my_env --clone=anaconda510-py35-with-jupyter_cms --copy
+setup-anaconda
+conda create --name=my_env --clone=anaconda-py35 --copy
 
 # tell your run-script to use this environment, so it will be used when executed in htcondor
-sed -i -e 's/anaconda510-py35-with-jupyter_cms/my_env/' run.sh
+sed -i -e 's/anaconda-py35/my_env/' run.sh
 
-# we need a newer version of git, since git_batch uses git-branches, which are not available in sdil's pre-installed version. So let's just add it to our cnoda env
-conda install --name myenv git
+# install packages to your environment
+conda install --name=my_env nbformat numpy matplotlib
+conda install --name=my_env -c anaconda git
 
 # tell condor your email adress, so it can notify you when the job is done.
 # remove the comment in the line with 'notify_user' and fill in your own email address
 nano run.sub
 
-# tell condor your email adress, so it can notify you when the job is done
-nano run.sub
-
 # prepare the git repository
-chmod +x schedule.sh
-git init; git add .; git commit -m "."
-git remote add batch $HOME/.batch/repo.git
+git init && git add . && git commit -m "input for batch job"
 
 # do a test run (we need condor for this, so connect to the correct machine)
-git push batch master
+condor_submit job.sub
 
 # wait until the job is done
 sleep 10
 
-# pull the results
-git pull batch master
-
 # look at the log
-cat condor_log.txt
+cat condor_errors.txt
+
+# checkin results
+git add . && git commit -m "result from batch job"
 ```
 
 
@@ -257,7 +251,7 @@ Leseliste:
 
 offene Recherche:
 
-* Wie werden in CI/CD die git modules behandelt?  
+* Wie werden in CI/CD die git modules behandelt?
 
 
 ## setting up debugging
