@@ -164,8 +164,7 @@ ssh <your_username>@bi-01-login.sdil.kit.edu
 git clone git@github.com:SmartDataInnovationLab/dirhash.git
 cd dirhash
 mvn package
-pip install --user pysha3 pyblake2
-cd -
+cd ..
 
 # check out the example-project and
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
@@ -175,13 +174,26 @@ cp -r git_batch/examples/condor_dirhash/ condor_dirhash
 cd condor_dirhash
 
 # freeze the data in your archive
-dirhash/run.sh $(pwd)/condor_dirhash/data/ --move-to-archive $(pwd)/archive/ --softlink $(pwd)/condor_dirhash/data/
+# first hash the data
+HASH=$(../dirhash/run.sh $(pwd)/data/)
+
+# now create a folder for the hashed data
+mkdir ../archive
+mkdir ../archive/$HASH
+
+# move data to the archive and add softlink to project
+mv data ../archive/$HASH/
+ln -s ../archive/$HASH/ data
+
+# make archive read-only (to avoid accidental changes)
+chmod -R a-w ../archive/$HASH
 
 # as you can see the data-dir is now softlinked to the archive, and inside all the files are readonly
 ls -la data data/
 
 # the rest will be done on the login-machine, since the BI machines don't have access to conda
 ssh <your_username>@login-l.sdil.kit.edu
+cd temp/condor_dirhash/
 
 # prepate a conda environment for your project (now is a good time to grab a coffee. This will take a while)
 setup-anaconda
@@ -202,12 +214,14 @@ nano run.sub
 git init && git add . && git commit -m "input for batch job"
 
 # do a test run (we need condor for this, so connect to the correct machine)
-condor_submit job.sub
+condor_submit run.sub
 
 # wait until the job is done
-sleep 10
+# you can look at it with
+condor_q
 
 # look at the log
+cat condor_outfile.txt 
 cat condor_errors.txt
 
 # checkin results
@@ -225,6 +239,8 @@ The `schedule.sh` is the entry-point for the user-customization. Here the actual
 For the best experience the results should be commited after the job is run (this must be done by a user-supplied script, because the receive-hook can not know when the job is finished). This way the user can access the results with a simple `git pull`
 
 Note: the schedule script runs inside the hook, which means that it will be run as the user doing the push; Its output will be part of the output of `git push`, and it has to finish before `git push` can finish.
+
+Note: we might remove the receive-hook in favor of other CI-Practices in the future
 
 # dev notes
 
