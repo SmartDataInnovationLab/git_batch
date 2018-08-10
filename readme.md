@@ -160,16 +160,22 @@ this example is the same as above, except the data will be frozen in a hashed ar
 ```bash
 ssh <your_username>@bi-01-login.sdil.kit.edu
 
+#install dirhash
+git clone git@github.com:SmartDataInnovationLab/dirhash.git
+cd dirhash
+mvn package
+pip install --user pysha3 pyblake2
+cd -
+
 # check out the example-project and
 git clone git@github.com:SmartDataInnovationLab/git_batch.git
 
 # copy the example project into an empty directory
-cp -r git_batch/examples/condor_dirhash/ $HOME/temp/condor_dirhash
-cd $HOME/temp/condor_dirhash
+cp -r git_batch/examples/condor_dirhash/ condor_dirhash
+cd condor_dirhash
 
 # freeze the data in your archive
-pyspark --jars $HOME/dev/dirhash/target/sparkhacks-0.0.1-SNAPSHOT.jar $HOME/dev/dirhash/dirhash.py $HOME/temp/condor_dirhash/data/ --move-to-archive $HOME/temp/archive/ --softlink $HOME/temp/condor_dirhash/data/ 2>/dev/null
-# (Note: this command will be simplified once we have decided on a workflow)
+dirhash/run.sh $(pwd)/condor_dirhash/data/ --move-to-archive $(pwd)/archive/ --softlink $(pwd)/condor_dirhash/data/
 
 # as you can see the data-dir is now softlinked to the archive, and inside all the files are readonly
 ls -la data data/
